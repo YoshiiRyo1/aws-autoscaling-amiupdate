@@ -102,7 +102,7 @@ bash 03-createdocument.sh
 [SSM ドキュメント](https://ap-northeast-1.console.aws.amazon.com/systems-manager/documents?region=ap-northeast-1) を開き、作成したドキュメントを検索・選択します。  
 **オートメーションを実行する** をクリックします。  
 
-入力パラーメータを以下のように入力します。  
+入力パラーメータを以下のように入力し、**実行** をクリックします。  
 
 |設定項目|設定値|
 |---|---|
@@ -115,7 +115,7 @@ bash 03-createdocument.sh
 |securityGroupId|仮 EC2 用のセキュリティグループを指定|
 |targetAMIname|GoldenImage-{{global:DATE_TIME}}|
 
-**実行** をクリックします。  
+
 
 ## 自動化実行履歴
 実行履歴を見たい、異常終了した際のログを見たい場合は AWS マネジメントコンソールから確認可能です。  
