@@ -102,7 +102,7 @@ bash 03-createdocument.sh
 [SSM ドキュメント](https://ap-northeast-1.console.aws.amazon.com/systems-manager/documents?region=ap-northeast-1) を開き、作成したドキュメントを検索・選択します。  
 **オートメーションを実行する** をクリックします。  
 
-入力パラーメータを以下のように入力し、**実行** をクリックします。  
+入力パラメータを以下のように入力し、**実行** をクリックします。  
 
 |設定項目|設定値|
 |---|---|
@@ -115,6 +115,24 @@ bash 03-createdocument.sh
 |securityGroupId|仮 EC2 用のセキュリティグループを指定|
 |targetAMIname|GoldenImage-{{global:DATE_TIME}}|
 
+
+### パラメータ入力を省略したい
+パラメータはほぼ決め打ちになるはずです。  
+
+都度入力が面倒な場合は autoscaling-amiupdate.yaml を編集します。  
+4行目からパラメータを定義しています。  
+ここに「default」を追加してドキュメントを更新します。  
+22~25行目を参考にしてみてください。  
+
+### パラメータ入力を省略したい その2
+AWS CLI でパラメータを指定して実行する方法もあります。  
+以下のように「--parameters」 の後ろに **設定項目=設定** をカンマでつなげていきます。  
+
+```
+$ aws ssm start-automation-execution --document-name "CreateGoldenImageandupdateASG" \
+  --document-version '$LATEST' \
+  --parameters "sourceAMIid=ami-xxxx,subnetId=subnet-xxxx"
+```
 
 
 ## 自動化実行履歴
