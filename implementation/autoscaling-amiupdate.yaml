@@ -1,0 +1,127 @@
+description: "Create GoldenImage and Update ASG"
+schemaVersion: "0.3"
+assumeRole: "{{AutomationAssumeRole}}"
+parameters:
+  AutomationAssumeRole:
+    type: String
+    description: "(Required) The ARN of the role that allows Automation to perform
+      the actions on your behalf. If no role is specified, Systems Manager Automation
+      uses your IAM permissions to execute this document."
+  sourceAMIid:
+    type: String
+    description: "(Required) Source AMI"
+  subnetId:
+    type: String
+    description: "(Required) The SubnetId where the instance is launched from the sourceAMIid."
+  securityGroupId:
+    type: String
+    description: "(Required) Security Group ID that associate the instance is launched from the sourceAMI"
+  instanceprofileName:
+    type: String
+    description: "(Required) EC2 instance profile name that associate source AMI"
+  targetAMIname:
+    type: String
+    description: "(Required) Name of new AMI"
+    default: "GoldenImage-{{global:DATE_TIME}}"
+  targetASG:
+    type: String
+    description: "(Required) Auto Scaling group to Update"
+  launchtemplateId:
+    type: String
+    description: "(Required) EC2 Launch Template ID"
+
+mainSteps:
+  - name: startInstances
+    action: aws:runInstances
+    maxAttempts: 1
+    timeoutSeconds: 1200
+    onFailure: Abort
+    inputs:
+      ImageId: "{{sourceAMIid}}"
+      InstanceType: "t3.large"
+      MinInstanceCount: 1
+      MaxInstanceCount: 1
+      IamInstanceProfileName: "{{instanceprofileName}}"
+      SubnetId: "{{subnetId}}"
+      SecurityGroupIds: 
+        - "{{securityGroupId}}"
+      TagSpecifications:
+        - ResourceType: instance
+          Tags:
+          - Key: Name
+            Value: Run from SSMAutomation
+
+  - name: ec2AppDeploy
+    action: aws:runCommand
+    maxAttempts: 1
+    timeoutSeconds: 360
+    onFailure: step:terminateInstance
+    inputs: 
+      DocumentName: AWS-RunShellScript
+      InstanceIds: 
+        - "{{startInstances.InstanceIds}}"
+      Parameters:
+        commands:
+          # deployment command here
+          - exit 0
+
+  - name: stopInstance
+    action: aws:changeInstanceState
+    maxAttempts: 1
+    timeoutSeconds: 180
+    onFailure: Continue
+    inputs:
+      InstanceIds:
+        - "{{startInstances.InstanceIds}}"
+      DesiredState: stopped
+
+  - name: createImage
+    action: aws:createImage
+    maxAttempts: 1
+    onFailure: Continue
+    inputs:
+      InstanceId: "{{startInstances.InstanceIds}}"
+      ImageName: "{{targetAMIname}}"
+      NoReboot: true
+      ImageDescription: "AMI created by EC2 Automation"
+
+  - name: terminateInstance
+    action: aws:changeInstanceState
+    maxAttempts: 1
+    onFailure: Continue
+    inputs:
+      InstanceIds:
+        - "{{startInstances.InstanceIds}}"
+      DesiredState: terminated
+
+  - name: updateLaunchTemplate
+    action: aws:executeAwsApi
+    timeoutSeconds: 120
+    maxAttempts: 1
+    onFailure: Abort
+    inputs: 
+      Service: ec2
+      Api: CreateLaunchTemplateVersion
+      LaunchTemplateId: "{{launchtemplateId}}"
+      LaunchTemplateData:
+        ImageId: "{{createImage.ImageId}}"
+      SourceVersion: '$Latest'
+  
+  - name: instanceRefresh
+    action: aws:invokeLambdaFunction
+    timeoutSeconds: 300
+    maxAttempts: 1
+    onFailure: Abort
+    inputs: 
+      FunctionName: "Automation-UpdateAsg"
+      Payload: "{\"targetASG\":\"{{targetASG}}\"}"
+    
+
+  - name: deleteSourceAMI
+    action: aws:deleteImage
+    maxAttempts: 1
+    timeoutSeconds: 300
+    onFailure: Abort
+    inputs:
+      ImageId: "{{sourceAMIid}}"
+
