@@ -56,7 +56,7 @@ autoscaling-amiupdate.yaml の65行目付近「# deployment command here」を�
 以下のコマンドを実行します。  
 
 ```
-bash 00-createinstanceprofile.sh
+$ bash 00-createinstanceprofile.sh
 ```
 
 ### SSM ドキュメントロール作成
@@ -65,7 +65,7 @@ SSM ドキュメント実行時に使用する IAM ロールを作成します�
 以下のコマンドを実行します。  
 
 ```
-bash 01-createrole.sh
+$ bash 01-createrole.sh
 ```
 
 ### Lambda 関数用ロール作成
@@ -74,7 +74,7 @@ Lambda 関数実行時に使用する IAM ロールを作成します。
 以下のコマンドを実行します。  
 
 ```
-bash 02-createlambbarole.sh
+$ bash 02-createlambbarole.sh
 ```
 
 ### Lambda 関数作成
@@ -83,7 +83,7 @@ bash 02-createlambbarole.sh
 以下のコマンドを実行します。  
 
 ```
-bash 02-createlambdafunction.sh
+$ bash 02-createlambdafunction.sh
 ```
 
 ### SSM ドキュメント作成
@@ -92,7 +92,7 @@ bash 02-createlambdafunction.sh
 以下のコマンドを実行します。  
 
 ```
-bash 03-createdocument.sh
+$ bash 03-createdocument.sh
 ```
 
 
